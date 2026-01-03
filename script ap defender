@@ -2,34 +2,31 @@ local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-
 -- =========================================================
--- WHITELIST
+-- WHITELIST (unchanged)
 -- =========================================================
 local WhitelistedIDs = {
     2952083583,
     3525548964,
     8770004882,
 }
-
 local function IsWhitelisted(id)
     for _, wlId in ipairs(WhitelistedIDs) do
         if id == wlId then return true end
     end
     return false
 end
-
 if not IsWhitelisted(LocalPlayer.UserId) then
     local ErrorGui = Instance.new("ScreenGui", PlayerGui)
     ErrorGui.Name = "WL_Error"
-   
+  
     local ErrorFrame = Instance.new("Frame", ErrorGui)
     ErrorFrame.Size = UDim2.new(0, 300, 0, 150)
     ErrorFrame.Position = UDim2.new(0.5, -150, 0.5, -75)
     ErrorFrame.BackgroundColor3 = Color3.fromRGB(15, 16, 20)
     ErrorFrame.BorderSizePixel = 0
     Instance.new("UICorner", ErrorFrame).CornerRadius = UDim.new(0, 10)
-   
+  
     local Msg = Instance.new("TextLabel", ErrorFrame)
     Msg.Size = UDim2.new(1, 0, 0.6, 0)
     Msg.BackgroundTransparency = 1
@@ -37,7 +34,7 @@ if not IsWhitelisted(LocalPlayer.UserId) then
     Msg.TextColor3 = Color3.fromRGB(255, 50, 50)
     Msg.Font = Enum.Font.GothamBold
     Msg.TextSize = 22
-   
+  
     local Link = Instance.new("TextLabel", ErrorFrame)
     Link.Size = UDim2.new(1, 0, 0.4, 0)
     Link.Position = UDim2.new(0, 0, 0.5, 0)
@@ -46,15 +43,14 @@ if not IsWhitelisted(LocalPlayer.UserId) then
     Link.TextColor3 = Color3.fromRGB(0, 255, 136)
     Link.Font = Enum.Font.Gotham
     Link.TextSize = 14
-   
+  
     task.delay(5, function()
         ErrorGui:Destroy()
     end)
     return
 end
-
 -- =========================================================
--- OPTIMIZED MAIN SCRIPT
+-- MAIN SCRIPT (with mobile dragging)
 -- =========================================================
 local CommandPrefix = ";"
 local DetectionWord = "stealing"
@@ -67,12 +63,10 @@ local PunishCommands = {
     "jumpscare ", "jump scared ",
     "rocket ", "roket "
 }
-
 local AutoDefendActive = false
 local IsAttacking = false
-local SelectedPlayerName = nil
+local SelectedPlayerName = nil  -- This is the player you manually select
 local SelectedButton = nil
-
 local COLOR_FONDO = Color3.fromRGB(15, 16, 20)
 local COLOR_HEADER = Color3.fromRGB(15, 16, 20)
 local COLOR_ITEM = Color3.fromRGB(15, 16, 20)
@@ -80,7 +74,7 @@ local COLOR_TOGGLE_OFF = Color3.fromRGB(50, 52, 60)
 local COLOR_TOGGLE_ON = Color3.fromRGB(0, 255, 136)
 local COLOR_TEXTO = Color3.fromRGB(230, 230, 230)
 
--- Faster command sending
+-- Command functions
 local function SendCommand(cmdText)
     local cmdBar = nil
     for _, v in pairs(PlayerGui:GetDescendants()) do
@@ -92,7 +86,7 @@ local function SendCommand(cmdText)
     if cmdBar then
         cmdBar.Text = cmdText
         local connections = getconnections and getconnections(cmdBar.FocusLost) or {}
-        for _, conn in pairs(connections) do conn:Fire(true) end
+        for _, connection in pairs(connections) do connection:Fire(true) end
         cmdBar:ReleaseFocus(true)
     end
 end
@@ -100,44 +94,14 @@ end
 local function RunPunishment(targetName)
     for _, cmd in ipairs(PunishCommands) do
         SendCommand(CommandPrefix .. cmd .. targetName)
-        task.wait(0.04)  -- Slightly faster
+        task.wait(0.05)
     end
 end
 
-local function GetTarget(textContext)
-    textContext = textContext:lower()
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer then
-            local name = p.Name:lower()
-            local display = p.DisplayName:lower()
-            if textContext:find(name) or textContext:find(display) then
-                return p.Name
-            end
-        end
-    end
-
-    -- Fallback: closest player
-    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        local closestPlayer, closestDist = nil, math.huge
-        local myPos = LocalPlayer.Character.HumanoidRootPart.Position
-        for _, p in pairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                local dist = (myPos - p.Character.HumanoidRootPart.Position).Magnitude
-                if dist < closestDist then
-                    closestDist = dist
-                    closestPlayer = p.Name
-                end
-            end
-        end
-        return closestPlayer
-    end
-end
-
--- ==================== SMALL & MOBILE UI ====================
+-- ==================== SMALL UI ====================
 local screenGui = Instance.new("ScreenGui", PlayerGui)
 screenGui.Name = "DanielResells_AutoDefense"
 screenGui.ResetOnSpawn = false
-
 local mainFrame = Instance.new("Frame", screenGui)
 mainFrame.Size = UDim2.new(0, 200, 0, 280)
 mainFrame.Position = UDim2.new(0.5, -100, 0.5, -140)
@@ -145,7 +109,7 @@ mainFrame.BackgroundColor3 = COLOR_FONDO
 mainFrame.BorderSizePixel = 0
 Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 10)
 
--- Header (same as before)
+-- Header
 local header = Instance.new("Frame", mainFrame)
 header.Size = UDim2.new(1, -4, 0, 50)
 header.Position = UDim2.new(0, 2, 0, 2)
@@ -162,7 +126,7 @@ title.Font = Enum.Font.GothamBold
 title.TextSize = 16
 title.TextXAlignment = Enum.TextXAlignment.Left
 
-local subtitle = Instance.new("TextLabel", header)
+local subtitle = Instance.new("TextLabel", header)  -- We'll use this for feedback too
 subtitle.Size = UDim2.new(1, 0, 0.3, 0)
 subtitle.Position = UDim2.new(0, 12, 0.65, 0)
 subtitle.BackgroundTransparency = 1
@@ -179,7 +143,7 @@ local function createToggle(name, pos, callback)
     frame.Position = UDim2.new(0.04, 0, 0, pos)
     frame.BackgroundColor3 = COLOR_ITEM
     Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
-   
+  
     local label = Instance.new("TextLabel", frame)
     label.Size = UDim2.new(0.7, 0, 1, 0)
     label.Position = UDim2.new(0.05, 0, 0, 0)
@@ -189,24 +153,24 @@ local function createToggle(name, pos, callback)
     label.Font = Enum.Font.GothamBold
     label.TextSize = 13
     label.TextXAlignment = Enum.TextXAlignment.Left
-   
+  
     local btn = Instance.new("TextButton", frame)
     btn.Size = UDim2.new(1, 0, 1, 0)
     btn.BackgroundTransparency = 1
     btn.Text = ""
-   
+  
     local switchBG = Instance.new("Frame", frame)
     switchBG.Size = UDim2.new(0, 36, 0, 18)
     switchBG.Position = UDim2.new(0.75, 0, 0.28, 0)
     switchBG.BackgroundColor3 = COLOR_TOGGLE_OFF
     Instance.new("UICorner", switchBG).CornerRadius = UDim.new(1, 0)
-   
+  
     local circle = Instance.new("Frame", switchBG)
     circle.Size = UDim2.new(0, 14, 0, 14)
     circle.Position = UDim2.new(0, 3, 0.5, -7)
     circle.BackgroundColor3 = Color3.new(1, 1, 1)
     Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
-   
+  
     local state = false
     btn.MouseButton1Click:Connect(function()
         state = not state
@@ -215,10 +179,9 @@ local function createToggle(name, pos, callback)
         callback(state)
     end)
 end
-
 createToggle("Auto-Defense", 58, function(v) AutoDefendActive = v end)
 
--- Player List (same compact version)
+-- Player List
 local listArea = Instance.new("ScrollingFrame", mainFrame)
 listArea.Size = UDim2.new(0.92, 0, 0, 100)
 listArea.Position = UDim2.new(0.04, 0, 0, 102)
@@ -232,8 +195,8 @@ listLayout.Padding = UDim.new(0, 4)
 listLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
 local function updatePlayerList()
-    for _, child in pairs(listArea:GetChildren()) do 
-        if child:IsA("TextButton") then child:Destroy() end 
+    for _, child in pairs(listArea:GetChildren()) do
+        if child:IsA("TextButton") then child:Destroy() end
     end
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer then
@@ -246,7 +209,7 @@ local function updatePlayerList()
             pBtn.TextSize = 12
             pBtn.TextXAlignment = Enum.TextXAlignment.Left
             Instance.new("UICorner", pBtn).CornerRadius = UDim.new(0, 6)
-            
+           
             pBtn.MouseButton1Click:Connect(function()
                 if SelectedButton then
                     SelectedButton.BackgroundColor3 = Color3.fromRGB(30, 32, 40)
@@ -262,7 +225,7 @@ local function updatePlayerList()
     listArea.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 8)
 end
 
--- Execute Button
+-- Execute Button (manual punish)
 local executeBtn = Instance.new("TextButton", mainFrame)
 executeBtn.Size = UDim2.new(0.92, 0, 0, 28)
 executeBtn.Position = UDim2.new(0.04, 0, 0, 210)
@@ -272,7 +235,6 @@ executeBtn.TextColor3 = Color3.fromRGB(15, 16, 20)
 executeBtn.Font = Enum.Font.GothamBold
 executeBtn.TextSize = 14
 Instance.new("UICorner", executeBtn).CornerRadius = UDim.new(0, 6)
-
 executeBtn.MouseButton1Click:Connect(function()
     if SelectedPlayerName then
         IsAttacking = true
@@ -281,7 +243,7 @@ executeBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Discord Label
+-- Discord Watermark
 local discordLabel = Instance.new("TextLabel", mainFrame)
 discordLabel.Size = UDim2.new(1, 0, 0, 18)
 discordLabel.Position = UDim2.new(0, 0, 1, -18)
@@ -292,24 +254,30 @@ discordLabel.Font = Enum.Font.Gotham
 discordLabel.TextSize = 9
 discordLabel.TextXAlignment = Enum.TextXAlignment.Center
 
--- ==================== MOBILE DRAGGING (unchanged, already optimal) ====================
+-- ==================== MOBILE-FRIENDLY DRAGGING ====================
 local dragging = false
+local dragInput = nil
 local dragStart = nil
 local startPos = nil
 
 local function updateInput(input)
     if dragging then
         local delta = input.Position - dragStart
-        mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        mainFrame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
     end
 end
 
 mainFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+    if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
         dragging = true
         dragStart = input.Position
         startPos = mainFrame.Position
-        
+       
         input.Changed:Connect(function()
             if input.UserInputState == Enum.UserInputState.End then
                 dragging = false
@@ -319,37 +287,55 @@ mainFrame.InputBegan:Connect(function(input)
 end)
 
 mainFrame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+    if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        dragInput = input
         updateInput(input)
     end
 end)
 
--- ==================== FASTER AUTO-DEFENSE LOOP ====================
+-- ==================== AUTO-DEFENSE LOOP (MODIFIED) ====================
 task.spawn(function()
     while true do
-        if AutoDefendActive and not IsAttacking then
-            local found = false
-            local messageText = ""
-
-            -- Fast check: Only PlayerGui (chat, notifications, etc.)
-            for _, obj in ipairs(PlayerGui:GetDescendants()) do
-                if (obj:IsA("TextLabel") or obj:IsA("TextBox")) and obj.Visible and obj.Text:lower():find(DetectionWord) then
-                    found = true
-                    messageText = obj.Text
+        if AutoDefendActive then
+            local foundTrig = false
+            for _, v in pairs(PlayerGui:GetDescendants()) do
+                if (v:IsA("TextLabel") or v:IsA("TextBox")) and v.Text:lower():find(DetectionWord) then
+                    foundTrig = true
                     break
                 end
             end
-
-            if found then
-                local target = GetTarget(messageText)
-                if target then
-                    IsAttacking = true
-                    RunPunishment(target)
-                    IsAttacking = false
+            if not foundTrig then
+                for _, v in pairs(workspace:GetDescendants()) do
+                    if v:IsA("BillboardGui") or v:IsA("SurfaceGui") then
+                        for _, txt in pairs(v:GetDescendants()) do
+                            if txt:IsA("TextLabel") and txt.Text:lower():find(DetectionWord) then
+                                foundTrig = true
+                                break
+                            end
+                        end
+                    end
+                    if foundTrig then break end
                 end
             end
+
+            if foundTrig and not IsAttacking and SelectedPlayerName then  -- << KEY CHANGE: uses selected player only
+                IsAttacking = true
+                RunPunishment(SelectedPlayerName)
+
+                -- Visual feedback
+                subtitle.Text = "DEFENDED!"
+                subtitle.TextColor3 = Color3.fromRGB(0, 255, 136)
+                task.delay(2, function()
+                    if subtitle.Text == "DEFENDED!" then
+                        subtitle.Text = "SYSTEM ACTIVE"
+                        subtitle.TextColor3 = Color3.fromRGB(100, 100, 100)
+                    end
+                end)
+
+                IsAttacking = false
+            end
         end
-        task.wait(0.2)  -- Faster checking (was 0.5)
+        task.wait(0.5)
     end
 end)
 
