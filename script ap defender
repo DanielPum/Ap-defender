@@ -2,15 +2,14 @@ local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-local TweenService = game:GetService("TweenService")
 
 -- =========================================================
--- CONFIGURACIÓN DE WHITELIST (SISTEMA DE ACCESO)
+-- WHITELIST (unchanged)
 -- =========================================================
 local WhitelistedIDs = {
     2952083583,
     3525548964,
-    8770004882, -- <--- CAMBIA ESTO POR TU USER ID DE ROBLOX
+    8770004882,
 }
 
 local function IsWhitelisted(id)
@@ -20,18 +19,17 @@ local function IsWhitelisted(id)
     return false
 end
 
--- SISTEMA DE BLOQUEO (Si no es WL, muestra el mensaje y corta el script)
 if not IsWhitelisted(LocalPlayer.UserId) then
     local ErrorGui = Instance.new("ScreenGui", PlayerGui)
     ErrorGui.Name = "WL_Error"
-    
+   
     local ErrorFrame = Instance.new("Frame", ErrorGui)
     ErrorFrame.Size = UDim2.new(0, 300, 0, 150)
     ErrorFrame.Position = UDim2.new(0.5, -150, 0.5, -75)
     ErrorFrame.BackgroundColor3 = Color3.fromRGB(15, 16, 20)
     ErrorFrame.BorderSizePixel = 0
     Instance.new("UICorner", ErrorFrame).CornerRadius = UDim.new(0, 10)
-    
+   
     local Msg = Instance.new("TextLabel", ErrorFrame)
     Msg.Size = UDim2.new(1, 0, 0.6, 0)
     Msg.BackgroundTransparency = 1
@@ -39,7 +37,7 @@ if not IsWhitelisted(LocalPlayer.UserId) then
     Msg.TextColor3 = Color3.fromRGB(255, 50, 50)
     Msg.Font = Enum.Font.GothamBold
     Msg.TextSize = 22
-
+   
     local Link = Instance.new("TextLabel", ErrorFrame)
     Link.Size = UDim2.new(1, 0, 0.4, 0)
     Link.Position = UDim2.new(0, 0, 0.5, 0)
@@ -48,33 +46,33 @@ if not IsWhitelisted(LocalPlayer.UserId) then
     Link.TextColor3 = Color3.fromRGB(0, 255, 136)
     Link.Font = Enum.Font.Gotham
     Link.TextSize = 14
-    
+   
     task.delay(5, function()
         ErrorGui:Destroy()
     end)
-    return -- Detiene todo el script original
+    return
 end
 
 -- =========================================================
--- TU CÓDIGO ORIGINAL (LÓGICA Y UI)
+-- MAIN SCRIPT (with mobile dragging)
 -- =========================================================
-local CommandPrefix = ";" 
+local CommandPrefix = ";"
 local DetectionWord = "stealing"
 local PunishCommands = {
-    "balloon ", "ballon ", 
-    "tiny ", "tini ", 
+    "balloon ", "ballon ",
+    "tiny ", "tini ",
     "inverse ",
-    "morph ", "moroh ", 
+    "morph ", "moroh ",
     "ragdoll ",
-    "jumpscare ", "jump scared ", 
-    "rocket ", "roket " 
+    "jumpscare ", "jump scared ",
+    "rocket ", "roket "
 }
+
 local AutoDefendActive = false
 local IsAttacking = false
 local SelectedPlayerName = nil
 local SelectedButton = nil
 
--- CONFIGURACIÓN DE COLORES
 local COLOR_FONDO = Color3.fromRGB(15, 16, 20)
 local COLOR_HEADER = Color3.fromRGB(15, 16, 20)
 local COLOR_ITEM = Color3.fromRGB(15, 16, 20)
@@ -82,7 +80,7 @@ local COLOR_TOGGLE_OFF = Color3.fromRGB(50, 52, 60)
 local COLOR_TOGGLE_ON = Color3.fromRGB(0, 255, 136)
 local COLOR_TEXTO = Color3.fromRGB(230, 230, 230)
 
--- FUNCIONES DE COMANDO
+-- Command functions (unchanged)
 local function SendCommand(cmdText)
     local cmdBar = nil
     for _, v in pairs(PlayerGui:GetDescendants()) do
@@ -122,53 +120,53 @@ local function GetTarget(textContext)
     return closestPlayer
 end
 
--- CREACIÓN DE LA UI ORIGINAL
+-- ==================== SMALL UI ====================
 local screenGui = Instance.new("ScreenGui", PlayerGui)
 screenGui.Name = "DanielResells_AutoDefense"
 screenGui.ResetOnSpawn = false
 
 local mainFrame = Instance.new("Frame", screenGui)
-mainFrame.Size = UDim2.new(0, 260, 0, 350)
-mainFrame.Position = UDim2.new(0.5, -130, 0.5, -175)
+mainFrame.Size = UDim2.new(0, 200, 0, 280)
+mainFrame.Position = UDim2.new(0.5, -100, 0.5, -140)
 mainFrame.BackgroundColor3 = COLOR_FONDO
 mainFrame.BorderSizePixel = 0
 Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 10)
 
 -- Header
 local header = Instance.new("Frame", mainFrame)
-header.Size = UDim2.new(1, -4, 0, 60)
+header.Size = UDim2.new(1, -4, 0, 50)
 header.Position = UDim2.new(0, 2, 0, 2)
 header.BackgroundColor3 = COLOR_HEADER
 Instance.new("UICorner", header).CornerRadius = UDim.new(0, 10)
 
 local title = Instance.new("TextLabel", header)
 title.Size = UDim2.new(1, 0, 0.6, 0)
-title.Position = UDim2.new(0, 15, 0.1, 0)
+title.Position = UDim2.new(0, 12, 0.1, 0)
 title.BackgroundTransparency = 1
 title.Text = "DANIEL RESELLS"
 title.TextColor3 = Color3.fromRGB(0, 255, 136)
 title.Font = Enum.Font.GothamBold
-title.TextSize = 18
+title.TextSize = 16
 title.TextXAlignment = Enum.TextXAlignment.Left
 
 local subtitle = Instance.new("TextLabel", header)
 subtitle.Size = UDim2.new(1, 0, 0.3, 0)
-subtitle.Position = UDim2.new(0, 15, 0.6, 0)
+subtitle.Position = UDim2.new(0, 12, 0.65, 0)
 subtitle.BackgroundTransparency = 1
 subtitle.Text = "SYSTEM ACTIVE"
 subtitle.TextColor3 = Color3.fromRGB(100, 100, 100)
 subtitle.Font = Enum.Font.Gotham
-subtitle.TextSize = 13
+subtitle.TextSize = 11
 subtitle.TextXAlignment = Enum.TextXAlignment.Left
 
--- Función para Toggles
+-- Toggle
 local function createToggle(name, pos, callback)
     local frame = Instance.new("Frame", mainFrame)
-    frame.Size = UDim2.new(0.92, 0, 0, 45)
+    frame.Size = UDim2.new(0.92, 0, 0, 38)
     frame.Position = UDim2.new(0.04, 0, 0, pos)
     frame.BackgroundColor3 = COLOR_ITEM
     Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
-    
+   
     local label = Instance.new("TextLabel", frame)
     label.Size = UDim2.new(0.7, 0, 1, 0)
     label.Position = UDim2.new(0.05, 0, 0, 0)
@@ -176,62 +174,66 @@ local function createToggle(name, pos, callback)
     label.Text = name
     label.TextColor3 = COLOR_TEXTO
     label.Font = Enum.Font.GothamBold
-    label.TextSize = 15
+    label.TextSize = 13
     label.TextXAlignment = Enum.TextXAlignment.Left
-    
+   
     local btn = Instance.new("TextButton", frame)
     btn.Size = UDim2.new(1, 0, 1, 0)
     btn.BackgroundTransparency = 1
     btn.Text = ""
-
+   
     local switchBG = Instance.new("Frame", frame)
-    switchBG.Size = UDim2.new(0, 40, 0, 22)
-    switchBG.Position = UDim2.new(0.75, 0, 0.25, 0)
+    switchBG.Size = UDim2.new(0, 36, 0, 18)
+    switchBG.Position = UDim2.new(0.75, 0, 0.28, 0)
     switchBG.BackgroundColor3 = COLOR_TOGGLE_OFF
     Instance.new("UICorner", switchBG).CornerRadius = UDim.new(1, 0)
-    
+   
     local circle = Instance.new("Frame", switchBG)
-    circle.Size = UDim2.new(0, 16, 0, 16)
-    circle.Position = UDim2.new(0, 3, 0.5, -8)
+    circle.Size = UDim2.new(0, 14, 0, 14)
+    circle.Position = UDim2.new(0, 3, 0.5, -7)
     circle.BackgroundColor3 = Color3.new(1, 1, 1)
     Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
-
+   
     local state = false
     btn.MouseButton1Click:Connect(function()
         state = not state
         switchBG.BackgroundColor3 = state and COLOR_TOGGLE_ON or COLOR_TOGGLE_OFF
-        circle:TweenPosition(state and UDim2.new(0, 21, 0.5, -8) or UDim2.new(0, 3, 0.5, -8), "Out", "Quad", 0.15, true)
+        circle:TweenPosition(state and UDim2.new(0, 19, 0.5, -7) or UDim2.new(0, 3, 0.5, -7), "Out", "Quad", 0.15, true)
         callback(state)
     end)
 end
 
-createToggle("Auto-Defense", 75, function(v) AutoDefendActive = v end)
+createToggle("Auto-Defense", 58, function(v) AutoDefendActive = v end)
 
--- Lista de Jugadores
+-- Player List
 local listArea = Instance.new("ScrollingFrame", mainFrame)
-listArea.Size = UDim2.new(0.92, 0, 0, 120)
-listArea.Position = UDim2.new(0.04, 0, 0, 130)
+listArea.Size = UDim2.new(0.92, 0, 0, 100)
+listArea.Position = UDim2.new(0.04, 0, 0, 102)
 listArea.BackgroundColor3 = Color3.fromRGB(15, 16, 18)
 listArea.BorderSizePixel = 0
 listArea.ScrollBarThickness = 2
 Instance.new("UICorner", listArea).CornerRadius = UDim.new(0, 8)
+
 local listLayout = Instance.new("UIListLayout", listArea)
-listLayout.Padding = UDim.new(0, 5)
+listLayout.Padding = UDim.new(0, 4)
 listLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
 local function updatePlayerList()
-    for _, child in pairs(listArea:GetChildren()) do if child:IsA("TextButton") then child:Destroy() end end
+    for _, child in pairs(listArea:GetChildren()) do 
+        if child:IsA("TextButton") then child:Destroy() end 
+    end
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer then
             local pBtn = Instance.new("TextButton", listArea)
-            pBtn.Size = UDim2.new(0.9, 0, 0, 35)
+            pBtn.Size = UDim2.new(0.9, 0, 0, 30)
             pBtn.BackgroundColor3 = Color3.fromRGB(30, 32, 40)
-            pBtn.Text = "  👤 " .. player.Name
+            pBtn.Text = "👤 " .. player.Name
             pBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
             pBtn.Font = Enum.Font.Gotham
-            pBtn.TextSize = 14
+            pBtn.TextSize = 12
             pBtn.TextXAlignment = Enum.TextXAlignment.Left
-            Instance.new("UICorner", pBtn)
+            Instance.new("UICorner", pBtn).CornerRadius = UDim.new(0, 6)
+            
             pBtn.MouseButton1Click:Connect(function()
                 if SelectedButton then
                     SelectedButton.BackgroundColor3 = Color3.fromRGB(30, 32, 40)
@@ -244,18 +246,18 @@ local function updatePlayerList()
             end)
         end
     end
-    listArea.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 10)
+    listArea.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 8)
 end
 
--- Botón ejecutar
+-- Execute Button
 local executeBtn = Instance.new("TextButton", mainFrame)
-executeBtn.Size = UDim2.new(0.92, 0, 0, 30)
-executeBtn.Position = UDim2.new(0.04, 0, 0, 260)
+executeBtn.Size = UDim2.new(0.92, 0, 0, 28)
+executeBtn.Position = UDim2.new(0.04, 0, 0, 210)
 executeBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 136)
-executeBtn.Text = "EXECUTE PUNISHMENT"
+executeBtn.Text = "EXECUTE"
 executeBtn.TextColor3 = Color3.fromRGB(15, 16, 20)
 executeBtn.Font = Enum.Font.GothamBold
-executeBtn.TextSize = 16
+executeBtn.TextSize = 14
 Instance.new("UICorner", executeBtn).CornerRadius = UDim.new(0, 6)
 
 executeBtn.MouseButton1Click:Connect(function()
@@ -268,18 +270,57 @@ end)
 
 -- Discord Watermark
 local discordLabel = Instance.new("TextLabel", mainFrame)
-discordLabel.Size = UDim2.new(1, 0, 0, 20)
-discordLabel.Position = UDim2.new(0, 0, 1, -20)
-discordLabel.BackgroundColor3 = COLOR_FONDO
-discordLabel.BorderSizePixel = 0
+discordLabel.Size = UDim2.new(1, 0, 0, 18)
+discordLabel.Position = UDim2.new(0, 0, 1, -18)
+discordLabel.BackgroundTransparency = 1
 discordLabel.Text = "discord.gg/bVMKBYvZ"
 discordLabel.TextColor3 = Color3.fromRGB(0, 255, 136)
 discordLabel.Font = Enum.Font.Gotham
-discordLabel.TextSize = 10
+discordLabel.TextSize = 9
 discordLabel.TextXAlignment = Enum.TextXAlignment.Center
-Instance.new("UICorner", discordLabel).CornerRadius = UDim.new(0, 10)
 
--- LOOP DE DEFENSA ORIGINAL
+-- ==================== MOBILE-FRIENDLY DRAGGING ====================
+local dragging = false
+local dragInput = nil
+local dragStart = nil
+local startPos = nil
+
+local function updateInput(input)
+    if dragging then
+        local delta = input.Position - dragStart
+        mainFrame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end
+
+-- Start drag (works with both mouse and touch)
+mainFrame.InputBegan:Connect(function(input)
+    if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+        dragging = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+-- Update position while dragging
+mainFrame.InputChanged:Connect(function(input)
+    if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        dragInput = input
+        updateInput(input)
+    end
+end)
+
+-- ==================== AUTO-DEFENSE LOOP ====================
 task.spawn(function()
     while true do
         if AutoDefendActive then
@@ -302,31 +343,18 @@ task.spawn(function()
             end
             if foundTrig and not IsAttacking then
                 local target = GetTarget(msg)
-                if target then IsAttacking = true; RunPunishment(target) end
-            elseif not foundTrig then
-                IsAttacking = false
+                if target then 
+                    IsAttacking = true 
+                    RunPunishment(target) 
+                    IsAttacking = false 
+                end
             end
         end
         task.wait(0.5)
     end
 end)
 
--- Dragging logic
-local dragging, dragInput, dragStart, startPos
-mainFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true; dragStart = input.Position; startPos = mainFrame.Position end
-end)
-mainFrame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end
-end)
-UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - dragStart
-        mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
-UserInputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
-
+-- Player list updates
 Players.PlayerAdded:Connect(updatePlayerList)
 Players.PlayerRemoving:Connect(updatePlayerList)
 updatePlayerList()
