@@ -8,221 +8,322 @@ local TweenService = game:GetService("TweenService")
 -- CONFIGURACIÓN DE WHITELIST (SISTEMA DE ACCESO)
 -- =========================================================
 local WhitelistedIDs = {
-    2952083583,
-    3525548964,
-    8770004882, 
+    2952083583,
+    3525548964,
+    8770004882, -- <--- CAMBIA ESTO POR TU USER ID DE ROBLOX
 }
 
 local function IsWhitelisted(id)
-    for _, wlId in ipairs(WhitelistedIDs) do
-        if id == wlId then return true end
-    end
-    return false
+    for _, wlId in ipairs(WhitelistedIDs) do
+        if id == wlId then return true end
+    end
+    return false
 end
 
+-- SISTEMA DE BLOQUEO (Si no es WL, muestra el mensaje y corta el script)
 if not IsWhitelisted(LocalPlayer.UserId) then
-    local ErrorGui = Instance.new("ScreenGui", PlayerGui)
-    local ErrorFrame = Instance.new("Frame", ErrorGui)
-    ErrorFrame.Size = UDim2.new(0, 250, 0, 100)
-    ErrorFrame.Position = UDim2.new(0.5, -125, 0.5, -50)
-    ErrorFrame.BackgroundColor3 = Color3.fromRGB(15, 16, 20)
-    Instance.new("UICorner", ErrorFrame).CornerRadius = UDim.new(0, 8)
-    
-    local Msg = Instance.new("TextLabel", ErrorFrame)
-    Msg.Size = UDim2.new(1, 0, 1, 0)
-    Msg.BackgroundTransparency = 1
-    Msg.Text = "NOT WHITELISTED"
-    Msg.TextColor3 = Color3.fromRGB(255, 50, 50)
-    Msg.Font = Enum.Font.GothamBold
-    Msg.TextSize = 16
-    
-    task.delay(5, function() ErrorGui:Destroy() end)
-    return 
+    local ErrorGui = Instance.new("ScreenGui", PlayerGui)
+    ErrorGui.Name = "WL_Error"
+    
+    local ErrorFrame = Instance.new("Frame", ErrorGui)
+    ErrorFrame.Size = UDim2.new(0, 300, 0, 150)
+    ErrorFrame.Position = UDim2.new(0.5, -150, 0.5, -75)
+    ErrorFrame.BackgroundColor3 = Color3.fromRGB(15, 16, 20)
+    ErrorFrame.BorderSizePixel = 0
+    Instance.new("UICorner", ErrorFrame).CornerRadius = UDim.new(0, 10)
+    
+    local Msg = Instance.new("TextLabel", ErrorFrame)
+    Msg.Size = UDim2.new(1, 0, 0.6, 0)
+    Msg.BackgroundTransparency = 1
+    Msg.Text = "YOU ARE NOT WL"
+    Msg.TextColor3 = Color3.fromRGB(255, 50, 50)
+    Msg.Font = Enum.Font.GothamBold
+    Msg.TextSize = 22
+
+    local Link = Instance.new("TextLabel", ErrorFrame)
+    Link.Size = UDim2.new(1, 0, 0.4, 0)
+    Link.Position = UDim2.new(0, 0, 0.5, 0)
+    Link.BackgroundTransparency = 1
+    Link.Text = "https://discord.gg/BsPsuYR8rc"
+    Link.TextColor3 = Color3.fromRGB(0, 255, 136)
+    Link.Font = Enum.Font.Gotham
+    Link.TextSize = 14
+    
+    task.delay(5, function()
+        ErrorGui:Destroy()
+    end)
+    return -- Detiene todo el script original
 end
 
 -- =========================================================
--- LÓGICA
+-- TU CÓDIGO ORIGINAL (LÓGICA Y UI)
 -- =========================================================
-local CommandPrefix = ";" 
+local CommandPrefix = ";" 
 local DetectionWord = "stealing"
-local PunishCommands = {"balloon ", "tiny ", "inverse ", "morph ", "ragdoll ", "jumpscare ", "rocket "}
+local PunishCommands = {
+    "balloon ", "ballon ", 
+    "tiny ", "tini ", 
+    "inverse ",
+    "morph ", "moroh ", 
+    "ragdoll ",
+    "jumpscare ", "jump scared ", 
+    "rocket ", "roket " 
+}
 local AutoDefendActive = false
 local IsAttacking = false
 local SelectedPlayerName = nil
 local SelectedButton = nil
 
+-- CONFIGURACIÓN DE COLORES
 local COLOR_FONDO = Color3.fromRGB(15, 16, 20)
-local COLOR_TOGGLE_OFF = Color3.fromRGB(40, 42, 50)
+local COLOR_HEADER = Color3.fromRGB(15, 16, 20)
+local COLOR_ITEM = Color3.fromRGB(15, 16, 20)
+local COLOR_TOGGLE_OFF = Color3.fromRGB(50, 52, 60)
 local COLOR_TOGGLE_ON = Color3.fromRGB(0, 255, 136)
 local COLOR_TEXTO = Color3.fromRGB(230, 230, 230)
 
+-- FUNCIONES DE COMANDO
 local function SendCommand(cmdText)
-    local cmdBar = nil
-    for _, v in pairs(PlayerGui:GetDescendants()) do
-        if v:IsA("TextBox") and (v.PlaceholderText:lower():find("command") or v.Name:lower():find("admin")) then
-            cmdBar = v; break
-        end
-    end
-    if cmdBar then
-        cmdBar.Text = cmdText
-        local connections = getconnections and getconnections(cmdBar.FocusLost) or {}
-        for _, connection in pairs(connections) do connection:Fire(true) end
-        cmdBar:ReleaseFocus(true)
-    end
+    local cmdBar = nil
+    for _, v in pairs(PlayerGui:GetDescendants()) do
+        if v:IsA("TextBox") and (v.PlaceholderText:lower():find("command") or v.Name:lower():find("admin")) then
+            cmdBar = v
+            break
+        end
+    end
+    if cmdBar then
+        cmdBar.Text = cmdText
+        local connections = getconnections and getconnections(cmdBar.FocusLost) or {}
+        for _, connection in pairs(connections) do connection:Fire(true) end
+        cmdBar:ReleaseFocus(true)
+    end
 end
 
 local function RunPunishment(targetName)
-    for _, cmd in ipairs(PunishCommands) do
-        SendCommand(CommandPrefix .. cmd .. targetName)
-        task.wait(0.05)
-    end
+    for _, cmd in ipairs(PunishCommands) do
+        SendCommand(CommandPrefix .. cmd .. targetName)
+        task.wait(0.05)
+    end
 end
 
--- =========================================================
--- UI COMPACTA
--- =========================================================
+local function GetTarget(textContext)
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and (textContext:find(p.Name) or textContext:find(p.DisplayName)) then
+            return p.Name
+        end
+    end
+    local closestPlayer, dist = nil, math.huge
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            local d = (LocalPlayer.Character.HumanoidRootPart.Position - p.Character.HumanoidRootPart.Position).Magnitude
+            if d < dist then dist = d; closestPlayer = p.Name end
+        end
+    end
+    return closestPlayer
+end
+
+-- CREACIÓN DE LA UI ORIGINAL
 local screenGui = Instance.new("ScreenGui", PlayerGui)
-screenGui.Name = "DanielResells_Mini"
+screenGui.Name = "DanielResells_AutoDefense"
+screenGui.ResetOnSpawn = false
 
 local mainFrame = Instance.new("Frame", screenGui)
-mainFrame.Size = UDim2.new(0, 200, 0, 260) -- Reduced from 260x350
-mainFrame.Position = UDim2.new(0.5, -100, 0.5, -130)
+mainFrame.Size = UDim2.new(0, 260, 0, 350)
+mainFrame.Position = UDim2.new(0.5, -130, 0.5, -175)
 mainFrame.BackgroundColor3 = COLOR_FONDO
 mainFrame.BorderSizePixel = 0
-Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 8)
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 10)
 
--- Header Mini
+-- Header
 local header = Instance.new("Frame", mainFrame)
-header.Size = UDim2.new(1, 0, 0, 40)
-header.BackgroundTransparency = 1
+header.Size = UDim2.new(1, -4, 0, 60)
+header.Position = UDim2.new(0, 2, 0, 2)
+header.BackgroundColor3 = COLOR_HEADER
+Instance.new("UICorner", header).CornerRadius = UDim.new(0, 10)
 
 local title = Instance.new("TextLabel", header)
-title.Size = UDim2.new(1, 0, 1, 0)
-title.Position = UDim2.new(0, 10, 0, 0)
+title.Size = UDim2.new(1, 0, 0.6, 0)
+title.Position = UDim2.new(0, 15, 0.1, 0)
 title.BackgroundTransparency = 1
 title.Text = "DANIEL RESELLS"
 title.TextColor3 = Color3.fromRGB(0, 255, 136)
 title.Font = Enum.Font.GothamBold
-title.TextSize = 14
+title.TextSize = 18
 title.TextXAlignment = Enum.TextXAlignment.Left
 
--- Toggle Compacto
+local subtitle = Instance.new("TextLabel", header)
+subtitle.Size = UDim2.new(1, 0, 0.3, 0)
+subtitle.Position = UDim2.new(0, 15, 0.6, 0)
+subtitle.BackgroundTransparency = 1
+subtitle.Text = "SYSTEM ACTIVE"
+subtitle.TextColor3 = Color3.fromRGB(100, 100, 100)
+subtitle.Font = Enum.Font.Gotham
+subtitle.TextSize = 13
+subtitle.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Función para Toggles
 local function createToggle(name, pos, callback)
-    local frame = Instance.new("Frame", mainFrame)
-    frame.Size = UDim2.new(0.9, 0, 0, 35)
-    frame.Position = UDim2.new(0.05, 0, 0, pos)
-    frame.BackgroundColor3 = Color3.fromRGB(25, 27, 32)
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 6)
-    
-    local label = Instance.new("TextLabel", frame)
-    label.Size = UDim2.new(0.6, 0, 1, 0)
-    label.Position = UDim2.new(0.05, 0, 0, 0)
-    label.BackgroundTransparency = 1
-    label.Text = name
-    label.TextColor3 = COLOR_TEXTO
-    label.Font = Enum.Font.GothamBold
-    label.TextSize = 12
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    
-    local btn = Instance.new("TextButton", frame)
-    btn.Size = UDim2.new(1, 0, 1, 0)
-    btn.BackgroundTransparency = 1
-    btn.Text = ""
+    local frame = Instance.new("Frame", mainFrame)
+    frame.Size = UDim2.new(0.92, 0, 0, 45)
+    frame.Position = UDim2.new(0.04, 0, 0, pos)
+    frame.BackgroundColor3 = COLOR_ITEM
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+    
+    local label = Instance.new("TextLabel", frame)
+    label.Size = UDim2.new(0.7, 0, 1, 0)
+    label.Position = UDim2.new(0.05, 0, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = name
+    label.TextColor3 = COLOR_TEXTO
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 15
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local btn = Instance.new("TextButton", frame)
+    btn.Size = UDim2.new(1, 0, 1, 0)
+    btn.BackgroundTransparency = 1
+    btn.Text = ""
 
-    local switchBG = Instance.new("Frame", frame)
-    switchBG.Size = UDim2.new(0, 30, 0, 16)
-    switchBG.Position = UDim2.new(0.75, 0, 0.5, -8)
-    switchBG.BackgroundColor3 = COLOR_TOGGLE_OFF
-    Instance.new("UICorner", switchBG).CornerRadius = UDim.new(1, 0)
-    
-    local circle = Instance.new("Frame", switchBG)
-    circle.Size = UDim2.new(0, 12, 0, 12)
-    circle.Position = UDim2.new(0, 2, 0.5, -6)
-    circle.BackgroundColor3 = Color3.new(1, 1, 1)
-    Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
+    local switchBG = Instance.new("Frame", frame)
+    switchBG.Size = UDim2.new(0, 40, 0, 22)
+    switchBG.Position = UDim2.new(0.75, 0, 0.25, 0)
+    switchBG.BackgroundColor3 = COLOR_TOGGLE_OFF
+    Instance.new("UICorner", switchBG).CornerRadius = UDim.new(1, 0)
+    
+    local circle = Instance.new("Frame", switchBG)
+    circle.Size = UDim2.new(0, 16, 0, 16)
+    circle.Position = UDim2.new(0, 3, 0.5, -8)
+    circle.BackgroundColor3 = Color3.new(1, 1, 1)
+    Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
 
-    local state = false
-    btn.MouseButton1Click:Connect(function()
-        state = not state
-        switchBG.BackgroundColor3 = state and COLOR_TOGGLE_ON or COLOR_TOGGLE_OFF
-        circle:TweenPosition(state and UDim2.new(0, 16, 0.5, -6) or UDim2.new(0, 2, 0.5, -6), "Out", "Quad", 0.1, true)
-        callback(state)
-    end)
+    local state = false
+    btn.MouseButton1Click:Connect(function()
+        state = not state
+        switchBG.BackgroundColor3 = state and COLOR_TOGGLE_ON or COLOR_TOGGLE_OFF
+        circle:TweenPosition(state and UDim2.new(0, 21, 0.5, -8) or UDim2.new(0, 3, 0.5, -8), "Out", "Quad", 0.15, true)
+        callback(state)
+    end)
 end
 
-createToggle("Auto-Defense", 45, function(v) AutoDefendActive = v end)
+createToggle("Auto-Defense", 75, function(v) AutoDefendActive = v end)
 
--- Lista Compacta
+-- Lista de Jugadores
 local listArea = Instance.new("ScrollingFrame", mainFrame)
-listArea.Size = UDim2.new(0.9, 0, 0, 110)
-listArea.Position = UDim2.new(0.05, 0, 0, 85)
-listArea.BackgroundColor3 = Color3.fromRGB(10, 11, 14)
+listArea.Size = UDim2.new(0.92, 0, 0, 120)
+listArea.Position = UDim2.new(0.04, 0, 0, 130)
+listArea.BackgroundColor3 = Color3.fromRGB(15, 16, 18)
 listArea.BorderSizePixel = 0
-listArea.ScrollBarThickness = 1
-Instance.new("UICorner", listArea).CornerRadius = UDim.new(0, 6)
+listArea.ScrollBarThickness = 2
+Instance.new("UICorner", listArea).CornerRadius = UDim.new(0, 8)
 local listLayout = Instance.new("UIListLayout", listArea)
-listLayout.Padding = UDim.new(0, 3)
+listLayout.Padding = UDim.new(0, 5)
+listLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
 local function updatePlayerList()
-    for _, child in pairs(listArea:GetChildren()) do if child:IsA("TextButton") then child:Destroy() end end
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then
-            local pBtn = Instance.new("TextButton", listArea)
-            pBtn.Size = UDim2.new(1, 0, 0, 28)
-            pBtn.BackgroundColor3 = Color3.fromRGB(30, 32, 40)
-            pBtn.Text = " " .. player.Name
-            pBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-            pBtn.Font = Enum.Font.Gotham
-            pBtn.TextSize = 11
-            pBtn.TextXAlignment = Enum.TextXAlignment.Left
-            Instance.new("UICorner", pBtn).CornerRadius = UDim.new(0, 4)
-            pBtn.MouseButton1Click:Connect(function()
-                if SelectedButton then SelectedButton.BackgroundColor3 = Color3.fromRGB(30, 32, 40) end
-                SelectedPlayerName = player.Name
-                SelectedButton = pBtn
-                pBtn.BackgroundColor3 = COLOR_TOGGLE_ON
-            end)
-        end
-    end
+    for _, child in pairs(listArea:GetChildren()) do if child:IsA("TextButton") then child:Destroy() end end
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            local pBtn = Instance.new("TextButton", listArea)
+            pBtn.Size = UDim2.new(0.9, 0, 0, 35)
+            pBtn.BackgroundColor3 = Color3.fromRGB(30, 32, 40)
+            pBtn.Text = "  👤 " .. player.Name
+            pBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+            pBtn.Font = Enum.Font.Gotham
+            pBtn.TextSize = 14
+            pBtn.TextXAlignment = Enum.TextXAlignment.Left
+            Instance.new("UICorner", pBtn)
+            pBtn.MouseButton1Click:Connect(function()
+                if SelectedButton then
+                    SelectedButton.BackgroundColor3 = Color3.fromRGB(30, 32, 40)
+                    SelectedButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+                end
+                SelectedPlayerName = player.Name
+                SelectedButton = pBtn
+                pBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 136)
+                pBtn.TextColor3 = Color3.fromRGB(15, 16, 20)
+            end)
+        end
+    end
+    listArea.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 10)
 end
 
--- Botón Ejecutar Mini
+-- Botón ejecutar
 local executeBtn = Instance.new("TextButton", mainFrame)
-executeBtn.Size = UDim2.new(0.9, 0, 0, 30)
-executeBtn.Position = UDim2.new(0.05, 0, 0, 200)
-executeBtn.BackgroundColor3 = COLOR_TOGGLE_ON
-executeBtn.Text = "PUNISH"
+executeBtn.Size = UDim2.new(0.92, 0, 0, 30)
+executeBtn.Position = UDim2.new(0.04, 0, 0, 260)
+executeBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 136)
+executeBtn.Text = "EXECUTE PUNISHMENT"
 executeBtn.TextColor3 = Color3.fromRGB(15, 16, 20)
 executeBtn.Font = Enum.Font.GothamBold
-executeBtn.TextSize = 13
+executeBtn.TextSize = 16
 Instance.new("UICorner", executeBtn).CornerRadius = UDim.new(0, 6)
 
 executeBtn.MouseButton1Click:Connect(function()
-    if SelectedPlayerName then RunPunishment(SelectedPlayerName) end
+    if SelectedPlayerName then
+        IsAttacking = true
+        RunPunishment(SelectedPlayerName)
+        IsAttacking = false
+    end
 end)
 
+-- Discord Watermark
 local discordLabel = Instance.new("TextLabel", mainFrame)
 discordLabel.Size = UDim2.new(1, 0, 0, 20)
 discordLabel.Position = UDim2.new(0, 0, 1, -20)
-discordLabel.BackgroundTransparency = 1
+discordLabel.BackgroundColor3 = COLOR_FONDO
+discordLabel.BorderSizePixel = 0
 discordLabel.Text = "discord.gg/bVMKBYvZ"
-discordLabel.TextColor3 = Color3.fromRGB(100, 100, 100)
+discordLabel.TextColor3 = Color3.fromRGB(0, 255, 136)
 discordLabel.Font = Enum.Font.Gotham
-discordLabel.TextSize = 9
+discordLabel.TextSize = 10
+discordLabel.TextXAlignment = Enum.TextXAlignment.Center
+Instance.new("UICorner", discordLabel).CornerRadius = UDim.new(0, 10)
+
+-- LOOP DE DEFENSA ORIGINAL
+task.spawn(function()
+    while true do
+        if AutoDefendActive then
+            local foundTrig, msg = false, ""
+            for _, v in pairs(PlayerGui:GetDescendants()) do
+                if (v:IsA("TextLabel") or v:IsA("TextBox")) and v.Text:lower():find(DetectionWord) then
+                    foundTrig = true; msg = v.Text; break
+                end
+            end
+            if not foundTrig then
+                for _, v in pairs(workspace:GetDescendants()) do
+                    if v:IsA("BillboardGui") or v:IsA("SurfaceGui") then
+                        for _, txt in pairs(v:GetDescendants()) do
+                            if txt:IsA("TextLabel") and txt.Text:lower():find(DetectionWord) then
+                                foundTrig = true; msg = txt.Text; break
+                            end
+                        end
+                    end
+                end
+            end
+            if foundTrig and not IsAttacking then
+                local target = GetTarget(msg)
+                if target then IsAttacking = true; RunPunishment(target) end
+            elseif not foundTrig then
+                IsAttacking = false
+            end
+        end
+        task.wait(0.5)
+    end
+end)
 
 -- Dragging logic
 local dragging, dragInput, dragStart, startPos
 mainFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true; dragStart = input.Position; startPos = mainFrame.Position end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true; dragStart = input.Position; startPos = mainFrame.Position end
 end)
 mainFrame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end
+    if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end
 end)
 UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - dragStart
-        mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
 end)
 UserInputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
 
