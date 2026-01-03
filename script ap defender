@@ -4,7 +4,7 @@ local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
 -- =========================================================
--- WHITELIST (unchanged)
+-- WHITELIST
 -- =========================================================
 local WhitelistedIDs = {
     2952083583,
@@ -54,7 +54,7 @@ if not IsWhitelisted(LocalPlayer.UserId) then
 end
 
 -- =========================================================
--- MAIN SCRIPT (with mobile dragging)
+-- OPTIMIZED MAIN SCRIPT
 -- =========================================================
 local CommandPrefix = ";"
 local DetectionWord = "stealing"
@@ -80,7 +80,7 @@ local COLOR_TOGGLE_OFF = Color3.fromRGB(50, 52, 60)
 local COLOR_TOGGLE_ON = Color3.fromRGB(0, 255, 136)
 local COLOR_TEXTO = Color3.fromRGB(230, 230, 230)
 
--- Command functions (unchanged)
+-- Faster command sending
 local function SendCommand(cmdText)
     local cmdBar = nil
     for _, v in pairs(PlayerGui:GetDescendants()) do
@@ -92,7 +92,7 @@ local function SendCommand(cmdText)
     if cmdBar then
         cmdBar.Text = cmdText
         local connections = getconnections and getconnections(cmdBar.FocusLost) or {}
-        for _, connection in pairs(connections) do connection:Fire(true) end
+        for _, conn in pairs(connections) do conn:Fire(true) end
         cmdBar:ReleaseFocus(true)
     end
 end
@@ -100,27 +100,40 @@ end
 local function RunPunishment(targetName)
     for _, cmd in ipairs(PunishCommands) do
         SendCommand(CommandPrefix .. cmd .. targetName)
-        task.wait(0.05)
+        task.wait(0.04)  -- Slightly faster
     end
 end
 
 local function GetTarget(textContext)
+    textContext = textContext:lower()
     for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and (textContext:find(p.Name) or textContext:find(p.DisplayName)) then
-            return p.Name
+        if p ~= LocalPlayer then
+            local name = p.Name:lower()
+            local display = p.DisplayName:lower()
+            if textContext:find(name) or textContext:find(display) then
+                return p.Name
+            end
         end
     end
-    local closestPlayer, dist = nil, math.huge
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-            local d = (LocalPlayer.Character.HumanoidRootPart.Position - p.Character.HumanoidRootPart.Position).Magnitude
-            if d < dist then dist = d; closestPlayer = p.Name end
+
+    -- Fallback: closest player
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local closestPlayer, closestDist = nil, math.huge
+        local myPos = LocalPlayer.Character.HumanoidRootPart.Position
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                local dist = (myPos - p.Character.HumanoidRootPart.Position).Magnitude
+                if dist < closestDist then
+                    closestDist = dist
+                    closestPlayer = p.Name
+                end
+            end
         end
+        return closestPlayer
     end
-    return closestPlayer
 end
 
--- ==================== SMALL UI ====================
+-- ==================== SMALL & MOBILE UI ====================
 local screenGui = Instance.new("ScreenGui", PlayerGui)
 screenGui.Name = "DanielResells_AutoDefense"
 screenGui.ResetOnSpawn = false
@@ -132,7 +145,7 @@ mainFrame.BackgroundColor3 = COLOR_FONDO
 mainFrame.BorderSizePixel = 0
 Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 10)
 
--- Header
+-- Header (same as before)
 local header = Instance.new("Frame", mainFrame)
 header.Size = UDim2.new(1, -4, 0, 50)
 header.Position = UDim2.new(0, 2, 0, 2)
@@ -205,7 +218,7 @@ end
 
 createToggle("Auto-Defense", 58, function(v) AutoDefendActive = v end)
 
--- Player List
+-- Player List (same compact version)
 local listArea = Instance.new("ScrollingFrame", mainFrame)
 listArea.Size = UDim2.new(0.92, 0, 0, 100)
 listArea.Position = UDim2.new(0.04, 0, 0, 102)
@@ -268,7 +281,7 @@ executeBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Discord Watermark
+-- Discord Label
 local discordLabel = Instance.new("TextLabel", mainFrame)
 discordLabel.Size = UDim2.new(1, 0, 0, 18)
 discordLabel.Position = UDim2.new(0, 0, 1, -18)
@@ -279,27 +292,20 @@ discordLabel.Font = Enum.Font.Gotham
 discordLabel.TextSize = 9
 discordLabel.TextXAlignment = Enum.TextXAlignment.Center
 
--- ==================== MOBILE-FRIENDLY DRAGGING ====================
+-- ==================== MOBILE DRAGGING (unchanged, already optimal) ====================
 local dragging = false
-local dragInput = nil
 local dragStart = nil
 local startPos = nil
 
 local function updateInput(input)
     if dragging then
         local delta = input.Position - dragStart
-        mainFrame.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
-        )
+        mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
 end
 
--- Start drag (works with both mouse and touch)
 mainFrame.InputBegan:Connect(function(input)
-    if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         dragging = true
         dragStart = input.Position
         startPos = mainFrame.Position
@@ -312,45 +318,38 @@ mainFrame.InputBegan:Connect(function(input)
     end
 end)
 
--- Update position while dragging
 mainFrame.InputChanged:Connect(function(input)
-    if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        dragInput = input
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
         updateInput(input)
     end
 end)
 
--- ==================== AUTO-DEFENSE LOOP ====================
+-- ==================== FASTER AUTO-DEFENSE LOOP ====================
 task.spawn(function()
     while true do
-        if AutoDefendActive then
-            local foundTrig, msg = false, ""
-            for _, v in pairs(PlayerGui:GetDescendants()) do
-                if (v:IsA("TextLabel") or v:IsA("TextBox")) and v.Text:lower():find(DetectionWord) then
-                    foundTrig = true; msg = v.Text; break
+        if AutoDefendActive and not IsAttacking then
+            local found = false
+            local messageText = ""
+
+            -- Fast check: Only PlayerGui (chat, notifications, etc.)
+            for _, obj in ipairs(PlayerGui:GetDescendants()) do
+                if (obj:IsA("TextLabel") or obj:IsA("TextBox")) and obj.Visible and obj.Text:lower():find(DetectionWord) then
+                    found = true
+                    messageText = obj.Text
+                    break
                 end
             end
-            if not foundTrig then
-                for _, v in pairs(workspace:GetDescendants()) do
-                    if v:IsA("BillboardGui") or v:IsA("SurfaceGui") then
-                        for _, txt in pairs(v:GetDescendants()) do
-                            if txt:IsA("TextLabel") and txt.Text:lower():find(DetectionWord) then
-                                foundTrig = true; msg = txt.Text; break
-                            end
-                        end
-                    end
-                end
-            end
-            if foundTrig and not IsAttacking then
-                local target = GetTarget(msg)
-                if target then 
-                    IsAttacking = true 
-                    RunPunishment(target) 
-                    IsAttacking = false 
+
+            if found then
+                local target = GetTarget(messageText)
+                if target then
+                    IsAttacking = true
+                    RunPunishment(target)
+                    IsAttacking = false
                 end
             end
         end
-        task.wait(0.5)
+        task.wait(0.2)  -- Faster checking (was 0.5)
     end
 end)
 
